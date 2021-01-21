@@ -1,3 +1,6 @@
+# T:=~/cgi/cgi-tmp
+T?=192.168.1.13
+
 CLIENT:=linux_client.out
 SERVER:=win_server.exe
 
@@ -13,18 +16,19 @@ MM:=x86_64-w64-mingw32-gcc
 CC:=gcc
 
 CFLAGS:=-std=gnu11 -g -O0 -Wall -Wextra -Wno-unused-parameter -Winline -Wdeprecated-declarations
-
-T:=~/cgi/cgi-tmp
+MFLAGS:=-std=c11 -g -O0 -Wall -Wextra -Wno-unused-parameter -Winline -Wdeprecated-declarations
 
 cscope:
 # 	cscope -I/usr/x86_64-w64-mingw32/include/ -1 $(id) $(file)
 	cscope -I/usr/x86_64-w64-mingw32/include/ -1 $(id) $(SERVER)
 
-$(SERVER): LDLIBS:=-lws2_32
+$(SERVER):
+%.exe: LDLIBS+=-lws2_32 -liphlpapi
 %.exe: %.c
-	$(MM) $(CFLAGS) $(LDFLAGS) -o $@ $(filter %.c , $^ ) $(LDLIBS)
-	@rm -fv $(T)/$@
-	@cp -v $@ $(T)/$@
+	$(MM) $(MFLAGS) $(LDFLAGS) -o $@ $(filter %.c , $^ ) $(LDLIBS)
+	scp $@ $T:C:\\Users\\%USER%\\$@ &
+# 	@rm -fv $T/$@
+# 	@cp -v $@ $T/$@
 
 $(CLIENT):
 %.out: %.c
@@ -32,4 +36,6 @@ $(CLIENT):
 
 clean: 
 	@rm -fv *.exe *.out  # *.h.gch
-	@rm -fv $(T)/$(SERVER)
+	ssh $T del C:\\Users\\%USER%\\win_server.exe &
+	ssh $T del C:\\Users\\%USER%\\win_test.exe &
+# 	@rm -fv $T/$(SERVER)

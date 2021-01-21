@@ -32,3 +32,14 @@ https://docs.microsoft.com/en-us/windows/win32/winsock/handling-winsock-errors
 return 0
 return SOCKET_ERROR/INVALID_SOCKET/NULL, get code w/ WSAGetLastError()
 
+
+Windows ssh
+https://stackoverflow.com/a/50502015/8243991
+
+https://docs.microsoft.com/en-us/windows/win32/midl/midl-start-page
+https://sourceforge.net/p/mingw-w64/wiki2/Wine%20integration/
+Windows MIDL Wine WIDL RPC
+
+https://aur.archlinux.org/packages/?K=mingw-w64&PP=250&do_Search=Go
+https://wiki.archlinux.org/index.php/MinGW_package_guidelines
+https://aur.archlinux.org/packages/mingw-w64-allegro/
