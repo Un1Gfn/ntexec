@@ -1,3 +1,17 @@
+https://imgflip.com/i/4ut4nl
+https://lingojam.com/FancyTextGenerator
+https://imgflip.com/memegenerator search "gru's plan
+
+Start server  on   Windows
+
+Send url to Windows from Linux
+
+Chrome opens url on Windows
+
+̶W̶i̶n̶d̶o̶w̶s̶ ̶O̶O̶M̶e̶d̶ ̶ ̶ ̶b̶y̶ ̶ ̶C̶h̶r̶o̶m̶e̶
+
+
+
 Windows Sockets 2 (Winsock) functions exported from WS2_32.dll (/usr/x86_64-w64-mingw32/lib/libws2_32.a)
 
 Windows Open System Architecture (WOSA)
