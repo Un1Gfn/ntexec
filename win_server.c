@@ -16,6 +16,7 @@
 #include <iphlpapi.h> // IP Helper API // GetAdaptersAddresses() GetAdaptersInfo() 
 
 #include <shlobj.h> // ShellExecute()
+#include <synchapi.h> // Sleep()
 
 #include <assert.h>
 #include <stdio.h>
@@ -32,8 +33,10 @@
 SOCKET sockfd=INVALID_SOCKET;
 IP_ADDRESS_STRING local_ip={};
 
+char buf[SZ+1]={};
+
 void openlnk(){
-  ShellExecute(NULL,"open","http://www.google.com/",NULL,NULL,SW_SHOWNORMAL);
+  ShellExecute(NULL,"open",buf,NULL,NULL,SW_SHOWNORMAL);
 }
 
 void initialize_winsock(){
@@ -208,7 +211,6 @@ void bind_socket(){
 
 void receive_data(){
 
-  char buf[SZ+1]={};
   ZeroMemory(buf,SZ+1);
 
   struct sockaddr_in client={};
@@ -225,17 +227,26 @@ void receive_data(){
   assert(buf[bytes_received-1]!='\0');
   buf[bytes_received]='\0';
 
-  printf("%s\n",buf);
-
   // Send acknowledgement
   // const char *ack="ack";
   // assert(SOCKET_ERROR!=sendto(sockfd,ack,strlen(ack),0,(SOCKADDR*)(&client),sizeof(struct sockaddr_in)));
 
 }
 
-void bye(){
-  printf("Press Enter to exit\n");
-  getchar();
+void loop(){
+  do{
+    receive_data();
+    printf("%s\n",buf);
+    openlnk();
+  }while(0!=strcmp(CMD_QUIT,buf));
+}
+
+void cleanup(){
+  printf("quit ...\n");
+  assert(0==closesocket(sockfd));
+  Sleep(500UL); // Milliseconds
+  // printf("Press Enter to exit\n");
+  // getchar();
 }
 
 int main(){
@@ -246,12 +257,11 @@ int main(){
 
   create_socket();
   bind_socket();
-  receive_data();
 
-  bye();
+  // receive_data();
+  loop();
 
+  cleanup();
   return 0;
 
 }
-
-// AF_INET

@@ -39,3 +39,8 @@ clean:
 	ssh $T del C:\\Users\\%USER%\\win_server.exe &
 	ssh $T del C:\\Users\\%USER%\\win_test.exe &
 # 	@rm -fv $T/$(SERVER)
+
+# https://stackoverflow.com/questions/3141738/duplicating-stdout-to-stderr
+# stress:
+# 	./linux_client.out 192.168.1.13 "$(</dev/urandom tr -dc "[:alnum:]" | head -c1024 | tee /dev/stderr)"
+# 	./linux_client.out 192.168.1.13 "$(</dev/urandom tr -dc "[:alnum:]" | head -c1025)"
