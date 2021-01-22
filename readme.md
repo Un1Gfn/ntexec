@@ -1,6 +1,10 @@
-https://imgflip.com/i/4ut4nl
-https://lingojam.com/FancyTextGenerator
-https://imgflip.com/memegenerator search "gru's plan
+![meme](https://i.imgflip.com/4ut4nl.jpg) <!-- https://imgflip.com/i/4ut4nl -->
+
+<details><summary></summary>
+
+---
+
+"gru's plan"
 
 Start server  on   Windows
 
@@ -10,7 +14,13 @@ Chrome opens url on Windows
 
 ̶W̶i̶n̶d̶o̶w̶s̶ ̶O̶O̶M̶e̶d̶ ̶ ̶ ̶b̶y̶ ̶ ̶C̶h̶r̶o̶m̶e̶
 
+https://lingojam.com/FancyTextGenerator
 
+https://imgflip.com/memegenerator
+
+---
+
+</details>
 
 Windows Sockets 2 (Winsock) functions exported from WS2_32.dll (/usr/x86_64-w64-mingw32/lib/libws2_32.a)
 
