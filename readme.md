@@ -1,30 +1,40 @@
 
 ## Workaround for [SU Q 1572456](https://superuser.com/q/1572456/)
 
-Download statically linked binaries from release page
+Download statically linked binaries (Assets) from [the release page](https://github.com/Un1Gfn-nt/ntexec/releases)
 
 On Windows
 
 ```bat
 > .\win_server.exe
+... Wireless ... XX-XX-XX-XX-XX-XX 2 ip ( 192.168.89.64 255.255.255.0 ... ) gw [ 192.168.1.1 ... ] dhcpfrom { 192.168.1.1 255.255.255.255 ... } ... ...
+Listening on 192.168.89.64:27015 ...
 ```
 
 On Linux
 
-```bash
-./ntexec.out 'c:\Windows\System32\cmd.exe'
+```
+$ ./ntexec.out
+
+[N] Open url remotely on a specific server ip
+  ./ntexec.out --<serveraddr_p> <url>
+  ./ntexec.out <url> --<serveraddr_p>
+
+[P] Open url remotely on the previous server ip
+  ./ntexec.out <url>
+
+$ ./ntexec.out 'c:\Windows\System32\cmd.exe' --192.168.89.64
+$ ./ntexec.out 'c:\Windows\System32\cmd.exe'
 
 # https://ss64.com/nt/syntax-mmc.html
-./ntexec.out 'c:\Windows\System32\mmc.exe'
-./ntexec.out 'c:\Windows\System32\services.msc'
+$ ./ntexec.out 'c:\Windows\System32\mmc.exe'
+$ ./ntexec.out 'c:\Windows\System32\services.msc'
 
-./ntexec.out 'c:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
-./ntexec.out https://www.github.com
+$ ./ntexec.out 'c:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
+$ ./ntexec.out https://www.github.com
 
-./ntexec.out q
+$ ./ntexec.out q
 ```
-
-<details><summary>h</summary>
 
 ReadFile() WriteFile() ReadFileEx() WriteFileEx()
 
@@ -49,11 +59,9 @@ Mingw-w64
 * https://wiki.archlinux.org/index.php/MinGW_package_guidelines
 * https://aur.archlinux.org/packages/mingw-w64-allegro/
 
-</details>
-
 ![meme](https://i.imgflip.com/4ut4nl.jpg) <!-- https://imgflip.com/i/4ut4nl -->
 
-<details><summary></summary>
+<details><summary><em>h</em></summary>
 
 ---
 
