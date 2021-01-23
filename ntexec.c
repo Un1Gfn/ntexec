@@ -31,8 +31,8 @@ char conf_path[PATH_MAX]={};
 static void help_exit(const char *const cmd){
   printf("\n");
   printf("[N] ""Open url remotely on a specific server ip\n");
-  printf("  %s --<serveraddr_p> <url>\n",cmd);
-  printf("  %s <url> --<serveraddr_p>\n",cmd);
+  printf("  %s --<serverip> <url>\n",cmd);
+  printf("  %s <url> --<serverip>\n",cmd);
   printf("\n");
   printf("[P] ""Open url remotely on the previous server ip\n");
   printf("  %s <url>\n",cmd);

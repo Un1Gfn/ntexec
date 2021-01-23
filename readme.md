@@ -17,14 +17,15 @@ On Linux
 $ ./ntexec.out
 
 [N] Open url remotely on a specific server ip
-  ./ntexec.out --<serveraddr_p> <url>
-  ./ntexec.out <url> --<serveraddr_p>
+  ./ntexec.out --<serverip> <url>
+  ./ntexec.out <url> --<serverip>
 
 [P] Open url remotely on the previous server ip
   ./ntexec.out <url>
 
 $ ./ntexec.out 'c:\Windows\System32\cmd.exe' --192.168.89.64
 $ ./ntexec.out 'c:\Windows\System32\cmd.exe'
+$ ./ntexec.out 'c:\Windows\System32\Taskmgr.exe'
 
 # https://ss64.com/nt/syntax-mmc.html
 $ ./ntexec.out 'c:\Windows\System32\mmc.exe'
@@ -35,6 +36,8 @@ $ ./ntexec.out https://www.github.com
 
 $ ./ntexec.out q
 ```
+
+---
 
 ReadFile() WriteFile() ReadFileEx() WriteFileEx()
 
@@ -61,7 +64,7 @@ Mingw-w64
 
 ![meme](https://i.imgflip.com/4ut4nl.jpg) <!-- https://imgflip.com/i/4ut4nl -->
 
-<details><summary><em>h</em></summary>
+<details><summary><!-- <em>h</em> --></summary>
 
 ---
 
