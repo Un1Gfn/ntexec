@@ -4,6 +4,6 @@
 #define DEFAULT_PORT 27015
 #define SZ 1024
 
-#define CMD_QUIT "q"
+#define CMD_QUIT "quit"
 
 #endif

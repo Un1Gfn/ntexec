@@ -24,8 +24,8 @@
 #include "./def.h"
 
 // https://docs.microsoft.com/en-us/cpp/preprocessor/comment-c-cpp
-// #pragma comment(lib, "Ws2_32.lib")
-// #pragma comment(lib, "IPHLPAPI.lib")
+// #pragma comment(lib, "Ws2_32.lib")   // C:\Windows\System32\ws2_32.dll
+// #pragma comment(lib, "IPHLPAPI.lib") // C:\Windows\System32\IPHLPAPI.DLL
 
 #define MALLOC(x) HeapAlloc(GetProcessHeap(),0,(x))
 #define FREE(x) HeapFree(GetProcessHeap(),0,(x))
@@ -36,6 +36,7 @@ IP_ADDRESS_STRING local_ip={};
 char buf[SZ+1]={};
 
 void openlnk(){
+  // ShellExecuteA()
   ShellExecute(NULL,"open",buf,NULL,NULL,SW_SHOWNORMAL);
 }
 

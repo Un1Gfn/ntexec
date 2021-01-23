@@ -5,7 +5,6 @@ SSH_DEPLOY_TO?=192.168.1.13
 DESTDIR?=/usr/local
 
 CONF:=.ntexec
-
 CLIENT:=ntexec.out
 SERVER:=win_server.exe
 
@@ -14,6 +13,7 @@ CC:=gcc
 
 CFLAGS:=-std=gnu11 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations
 MFLAGS:=-std=c11 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations
+LDFLAGS:=-static
 
 # default: ;
 # default: $(CLIENT)
@@ -23,19 +23,23 @@ default: $(CLIENT) $(SERVER)
 cscope:
 	cscope -I/usr/x86_64-w64-mingw32/include/ -1 $(id) $(file)
 
-$(SERVER): LDLIBS+=-lws2_32 -liphlpapi
-%.exe: %.c
+$(SERVER): LDLIBS+=-lws2_32   # /usr/x86_64-w64-mingw32/lib/libws2_32.a
+$(SERVER): LDLIBS+=-liphlpapi # /usr/x86_64-w64-mingw32/lib/libiphlpapi.a
+%.exe: %.c def.h
 	$(MM) $(MFLAGS) $(LDFLAGS) -o $@ $(filter %.c , $^ ) $(LDLIBS)
 	scp $@ $(SSH_DEPLOY_TO):C:\\Users\\%USER%\\$@ &
 
 $(CLIENT): CFLAGS+=-DCONF=\"$(CONF)\"
-%.out: %.c
+%.out: %.c def.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(filter %.c , $^ ) $(LDLIBS)
 	@sudo rm -rfv $(DESTDIR)/bin/$(CLIENT)
 	@sudo cp -v $(CLIENT) $(DESTDIR)/bin/$(CLIENT)
 
 test: $(CLIENT)
 	env CONF="$(CONF)" CLIENT="$(CLIENT)" ./test.sh 
+
+release: $(CLIENT) $(SERVER)
+	./release.sh $(CLIENT) $(SERVER)
 
 clean: 
 	@rm -fv *.exe *.out  # *.h.gch
