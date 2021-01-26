@@ -19,6 +19,7 @@
 #include <synchapi.h> // Sleep()
 
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "./def.h"
@@ -52,6 +53,15 @@ void initialize_winsock(){
     // The highest version of the Windows Sockets specification that the Ws2_32.dll can support
     && (2==(LOBYTE(wsaData.wHighVersion))) // major version number 
     && (2==(HIBYTE(wsaData.wHighVersion))) // minor version number 
+  );
+}
+
+bool all_zero(const IP_ADDRESS_STRING *const pip){
+  static_assert(16==sizeof(((PIP_ADDRESS_STRING)NULL)->String));
+  static_assert(16==sizeof(pip->String));
+  return(
+    '\0'==pip->String[0] &&
+      0 ==strncmp(pip->String,pip->String+1,15)
   );
 }
 
@@ -110,13 +120,11 @@ void get_local_ip(){
     );
     // Filter out adapters without gateway (2/2)
     if(0!=strcmp("0.0.0.0",p->GatewayList.IpAddress.String)){
-      // local_ip.String=0;
-      static_assert(16==sizeof(((PIP_ADDRESS_STRING)NULL)->String));
-      assert(0==strlen(local_ip.String));
-      assert(15>=strlen(p->IpAddressList.IpAddress.String));
+      assert(all_zero(&local_ip));
+      assert(p->IpAddressList.IpAddress.String[15]=='\0');
       strcpy(local_ip.String,p->IpAddressList.IpAddress.String);
     }
-    
+
     printf("gw ");
     for(const IP_ADDR_STRING *pp=&(p->GatewayList);pp!=NULL;pp=pp->Next){
       assert(0==strcmp("255.255.255.255",pp->IpMask.String));
@@ -134,15 +142,15 @@ void get_local_ip(){
     );
 
     assert(
-                    !(p->     HaveWins                       )
-      && NULL==       p->  PrimaryWinsServer.Next
-      &&    0==strlen(p->  PrimaryWinsServer.IpAddress.String)
-      &&    0==strlen(p->  PrimaryWinsServer.IpMask   .String)
-      &&    0==       p->  PrimaryWinsServer.Context
-      && NULL==       p->SecondaryWinsServer.Next
-      &&    0==strlen(p->SecondaryWinsServer.IpAddress.String)
-      &&    0==strlen(p->SecondaryWinsServer.IpMask   .String)
-      &&    0==       p->SecondaryWinsServer.Context
+                  !(p->     HaveWins                 )
+      &&     NULL==(p->  PrimaryWinsServer.Next      )
+      && all_zero(&(p->  PrimaryWinsServer.IpAddress))
+      && all_zero(&(p->  PrimaryWinsServer.IpMask   ))
+      &&        0==(p->  PrimaryWinsServer.Context   )
+      &&     NULL==(p->SecondaryWinsServer.Next      )
+      && all_zero(&(p->SecondaryWinsServer.IpAddress))
+      && all_zero(&(p->SecondaryWinsServer.IpMask   ))
+      &&        0==(p->SecondaryWinsServer.Context   )
     );
     // printf("%d ",p->HaveWins);
     // printf("WINSp ");
@@ -185,7 +193,8 @@ void get_local_ip(){
 }
 
 void create_socket(){
-  assert(INVALID_SOCKET!=(sockfd=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP)));
+  sockfd=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
+  assert(sockfd!=INVALID_SOCKET);
   // WSAGetLastError()
 }
 
@@ -200,7 +209,8 @@ void bind_socket(){
     // .sin_addr.s_addr = inet_addr("127.0.0.1")
   };
   assert(0==bind(sockfd,(SOCKADDR*)(&server),sizeof(struct sockaddr_in)));
-  if(0==strlen(local_ip.String)||0==strcmp("0.0.0.0",local_ip.String)){
+  static_assert(FALSE==0);
+  if('\0'==local_ip.String[0]||0==strcmp("0.0.0.0",local_ip.String)){
     printf("offline\n");
     assert(FALSE);
   }
