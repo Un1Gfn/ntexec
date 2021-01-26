@@ -1,5 +1,5 @@
-MAKEFLAGS += --no-builtin-rules
-MAKEFLAGS += --no-builtin-variables
+MAKEFLAGS+=--no-builtin-rules
+MAKEFLAGS+=--no-builtin-variables
 
 SSH_DEPLOY_TO?=192.168.1.13
 DESTDIR?=/usr/local
@@ -11,14 +11,14 @@ SERVER:=win_server.exe
 MM:=x86_64-w64-mingw32-gcc
 CC:=gcc
 
-CFLAGS:=-std=gnu11 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations
-MFLAGS:=-std=c11 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations
-LDFLAGS:=-static
+CFLAGS:=-std=gnu11 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations $(CFLAGS)
+MFLAGS:=-std=c11 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations $(MFLAGS)
+LDFLAGS:=-static $(LDFLAGS)
 
 # default: ;
 # default: $(CLIENT)
 # default: $(SERVER)
-default: $(CLIENT) $(SERVER)
+default: $(SERVER) install
 
 cscope:
 	cscope -I/usr/x86_64-w64-mingw32/include/ -1 $(id) $(file)
@@ -29,11 +29,13 @@ $(SERVER): LDLIBS+=-liphlpapi # /usr/x86_64-w64-mingw32/lib/libiphlpapi.a
 	$(MM) $(MFLAGS) $(LDFLAGS) -o $@ $(filter %.c , $^ ) $(LDLIBS)
 	scp $@ $(SSH_DEPLOY_TO):C:\\Users\\%USER%\\$@ &
 
+install: $(CLIENT)
+	@sudo rm -rfv $(DESTDIR)/bin/$(CLIENT)
+	@sudo cp -v $(CLIENT) $(DESTDIR)/bin/$(CLIENT)
+
 $(CLIENT): CFLAGS+=-DCONF=\"$(CONF)\"
 %.out: %.c def.h
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(filter %.c , $^ ) $(LDLIBS)
-	@sudo rm -rfv $(DESTDIR)/bin/$(CLIENT)
-	@sudo cp -v $(CLIENT) $(DESTDIR)/bin/$(CLIENT)
 
 test: $(CLIENT)
 	env CONF="$(CONF)" CLIENT="$(CLIENT)" ./test.sh 

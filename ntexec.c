@@ -18,7 +18,7 @@
 #include "./def.h"
 
 #define SISZ (sizeof(struct sockaddr_in))
-#define URL_NO_HYPHEN(SRC) { url=SRC; assert( url && strlen(url)>=2 && url[0]!='-' && url[1]!='-' ); }
+#define URL_NO_HYPHEN(SRC) { url=SRC; assert( url && url[0]!='-' && ( url[0]=='\0' || url[1]!='-' ) ); }
 
 //            250~255   200~249     100~199     10~99     0~9
 #define SEG "(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])"
@@ -47,7 +47,7 @@ static void conf_genpath(){
   );
 }
 
-static void exit_if_ip_invalid(const char *const ip,const char *const fmt){
+static void exit_if_ip_invalid(const char *const ip, const char *const fmt){
   regex_t reg={};
   assert(0==regcomp(&reg, "^(" SEG "\\.){3}" SEG "$" ,REG_EXTENDED));
   // regex(3)
@@ -57,8 +57,9 @@ static void exit_if_ip_invalid(const char *const ip,const char *const fmt){
   regmatch_t pmatch[1]={{}};
   const int r=regexec(&reg,ip,1,pmatch,0);
   regfree(&reg);
+  const size_t l=strnlen(ip,INET_ADDRSTRLEN);
   if(!(
-    r==0 && S(0)==0 && (size_t)E(0)==strlen(ip) &&
+    r==0 && S(0)==0 && (size_t)E(0)==l && l<=(INET_ADDRSTRLEN-1) &&
     1==inet_aton(ip,&((struct in_addr){}))
   )){
     printf(fmt,conf_path);
@@ -66,7 +67,7 @@ static void exit_if_ip_invalid(const char *const ip,const char *const fmt){
   }
 }
 
-static void dump_close(char *const dest,FILE *const src,const int destspace){
+static void dump_close(char *const dest, FILE *const src, const int destspace){
   assert(
     0==fseek(src,0,SEEK_END) &&
     0==feof(src) &&
@@ -79,7 +80,7 @@ static void dump_close(char *const dest,FILE *const src,const int destspace){
 }
 
 // Mutually exclusive w/ conf_update()
-static void conf_load(char *const dest,const int destlen){
+static void conf_load(char *const dest, const int destlen){
   FILE *const f=fopen(conf_path,"r");
   if(!f){
     printf( "\n%s not found\n" "use [N] instead of [P]\n\n" , conf_path );
@@ -102,7 +103,7 @@ static void conf_update(const char *const src){
   assert(0==fclose(f));
 }
 
-static void ntexec(const char *const server,const char *const url){
+static void ntexec(const char *const server, const char *const url){
 
   int sockfd=-1;
 
@@ -125,10 +126,11 @@ static void ntexec(const char *const server,const char *const url){
   assert(3<=(sockfd=socket(AF_INET,SOCK_DGRAM,0)));
 
   // Send
-  assert(SZ>=strlen(url));
+  const size_t l=strnlen(url,SZ);
+  assert(l<=SZ-1);
   printf("sending \"%s\" to %s ...\n",url,server);
-  const ssize_t n=sendto(sockfd,url,strlen(url),MSG_CONFIRM,(const struct sockaddr*)(&serveraddr),SISZ);
-  assert((long long)n==(long long)strlen(url));
+  const ssize_t n=sendto(sockfd,url,l,MSG_CONFIRM,(const struct sockaddr*)(&serveraddr),SISZ);
+  assert((long long)n==(long long)l);
   printf("sent\n");
 
   // Receive acknowledgement
@@ -147,7 +149,7 @@ static void ntexec(const char *const server,const char *const url){
 
 }
 
-int main(const int argc,const char *const *const argv){
+int main(const int argc, const char *const *const argv){
 
   const char *url=NULL;
 

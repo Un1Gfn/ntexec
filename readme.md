@@ -1,4 +1,3 @@
-
 ## Workaround for [SU Q 1572456](https://superuser.com/q/1572456/)
 
 Download statically linked binaries (Assets) from [the release page](https://github.com/Un1Gfn-nt/ntexec/releases)
@@ -13,7 +12,7 @@ Listening on 192.168.89.64:27015 ...
 
 On Linux
 
-```
+```plain
 $ ./ntexec.out
 
 [N] Open url remotely on a specific server ip
