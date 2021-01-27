@@ -11,8 +11,8 @@ SERVER:=win_server.exe
 MM:=x86_64-w64-mingw32-gcc
 CC:=gcc
 
-CFLAGS:=-std=gnu11 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations $(CFLAGS)
-MFLAGS:=-std=c11 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations $(MFLAGS)
+CFLAGS:=-std=gnu17 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations $(CFLAGS)
+MFLAGS:=-std=c17 -g -O0 -Wall -Wextra -Winline -Wdeprecated-declarations $(MFLAGS)
 LDFLAGS:=-static $(LDFLAGS)
 
 # default: ;
@@ -45,6 +45,7 @@ release: $(CLIENT) $(SERVER)
 
 clean: 
 	@rm -fv *.exe *.out  # *.h.gch
+	@sudo rm -rfv $(DESTDIR)/bin/$(CLIENT)
 	ssh $(SSH_DEPLOY_TO) del C:\\Users\\%USER%\\win_server.exe &
 	ssh $(SSH_DEPLOY_TO) del C:\\Users\\%USER%\\win_test.exe &
 

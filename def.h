@@ -6,4 +6,8 @@
 
 #define CMD_QUIT "quit"
 
+#define ACK "ack"
+#define ACKSZ 4
+// #define STRLEN(x) (sizeof(x)/sizeof(char)-1)
+
 #endif

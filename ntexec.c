@@ -3,6 +3,7 @@
 #endif
 
 #include <assert.h>
+#include <ctype.h>
 #include <limits.h> // PATH_MAX
 #include <regex.h>
 #include <stdbool.h>
@@ -26,8 +27,6 @@
 #define S(x) (pmatch[x].rm_so)
 #define E(x) (pmatch[x].rm_eo)
 
-char conf_path[PATH_MAX]={};
-
 static void help_exit(const char *const cmd){
   printf("\n");
   printf("[N] ""Open url remotely on a specific server ip\n");
@@ -37,17 +36,20 @@ static void help_exit(const char *const cmd){
   printf("[P] ""Open url remotely on the previous server ip\n");
   printf("  %s <url>\n",cmd);
   printf("\n");
+  printf("    ""Pass <url> as a single hyphen (-) to read urls from stdin\n");
+  printf("\n");
   exit(0);
 }
 
-static void conf_genpath(){
+static void conf_genpath(char *const conf_path){
   assert(
     conf_path==strcpy(conf_path,getenv("HOME")) && // /home/exampleuser
     conf_path==strcat(conf_path,"/"CONF)           // /home/exampleuser/CONF
   );
 }
 
-static void exit_if_ip_invalid(const char *const ip, const char *const fmt){
+static void exit_if_ip_invalid(const char *const ip, const char *const fmt, const char *const conf_path){
+  assert( ip && ip[0]!='\0' );
   regex_t reg={};
   assert(0==regcomp(&reg, "^(" SEG "\\.){3}" SEG "$" ,REG_EXTENDED));
   // regex(3)
@@ -62,7 +64,7 @@ static void exit_if_ip_invalid(const char *const ip, const char *const fmt){
     r==0 && S(0)==0 && (size_t)E(0)==l && l<=(INET_ADDRSTRLEN-1) &&
     1==inet_aton(ip,&((struct in_addr){}))
   )){
-    printf(fmt,conf_path);
+    conf_path?printf(fmt,conf_path):printf(fmt);
     exit(-1);
   }
 }
@@ -80,33 +82,37 @@ static void dump_close(char *const dest, FILE *const src, const int destspace){
 }
 
 // Mutually exclusive w/ conf_update()
-static void conf_load(char *const dest, const int destlen){
+static void conf_load(char *const dest, const int destlen, const char *const conf_path){
   FILE *const f=fopen(conf_path,"r");
   if(!f){
     printf( "\n%s not found\n" "use [N] instead of [P]\n\n" , conf_path );
     exit(-1);
   }
   dump_close(dest,f,destlen);
-  exit_if_ip_invalid(dest,"%s does not hold a valid IPv4 address\nfail to load\n");
+  exit_if_ip_invalid(dest,"%s does not hold a valid IPv4 address\nfail to load\n",conf_path);
 }
 
 // Mutually exclusive w/ conf_load()
-static void conf_update(const char *const src){
+static void conf_update(const char *const conf_path, const char *const src){
   FILE *f=fopen(conf_path,"r");
   if(f){
     char t[INET_ADDRSTRLEN]={};
     dump_close(t,f,INET_ADDRSTRLEN);
-    exit_if_ip_invalid(t,"%s already holds something but it is not a valid IPv4 address\nI would not dare modify it\n");
+    exit_if_ip_invalid(t,"%s already holds something but it is not a valid IPv4 address\nI would not dare modify it\n",conf_path);
   }
   assert(NULL!=(f=fopen(conf_path,"w")));
   fprintf(f,"%s",src);
   assert(0==fclose(f));
 }
 
-static void ntexec(const char *const server, const char *const url){
+static int init0(){
+  int ret=-1;
+  // Create socket
+  assert(3<=(ret=socket(AF_INET,SOCK_DGRAM,0)));
+  return ret;
+}
 
-  int sockfd=-1;
-
+static void send0(const char *const server, const int sockfd, const char *const url){
   // Test with loopback
   // const struct sockaddr_in serveraddr={
   //   .sin_family=AF_INET,
@@ -115,69 +121,165 @@ static void ntexec(const char *const server, const char *const url){
   //     .s_addr=htonl(INADDR_LOOPBACK)
   //   }
   // };
-
-  struct sockaddr_in serveraddr={
+  // Load address
+  struct sockaddr_in sin={
     .sin_family=AF_INET,
     .sin_port=htons(DEFAULT_PORT),
   };
-  assert(1==inet_aton(server,&(serveraddr.sin_addr)));
-
-  // Create socket
-  assert(3<=(sockfd=socket(AF_INET,SOCK_DGRAM,0)));
-
+  assert(1==inet_aton(server,&(sin.sin_addr)));
   // Send
   const size_t l=strnlen(url,SZ);
   assert(l<=SZ-1);
-  printf("sending \"%s\" to %s ...\n",url,server);
-  const ssize_t n=sendto(sockfd,url,l,MSG_CONFIRM,(const struct sockaddr*)(&serveraddr),SISZ);
+  printf("sending \"%s\" to %s ...",url,server);
+  fflush(stdout);
+  const ssize_t n=sendto(sockfd,url,l,MSG_CONFIRM,(const struct sockaddr*)(&sin),SISZ);
   assert((long long)n==(long long)l);
-  printf("sent\n");
+  printf(" sent\n");
+}
 
-  // Receive acknowledgement
-  // char buf[SZ]={};
-  // printf("trying to receive acknowledgement ...\n");
+/*static void recv0(const int sockfd){
+
+  assert(false);
+
+  // getpeername()
+
+  // char buf[ACKSZ]={};
+  // struct sockaddr_in sin={};
+
   // socklen_t addrlen=SISZ;
-  // struct sockaddr_in backup={};
-  // memcpy(&backup,&serveraddr,SISZ);
-  // assert(1<=recvfrom(sockfd,buf,SZ,MSG_WAITALL,(struct sockaddr*)(&serveraddr),&addrlen));
+  // printf("waiting for acknowledgement ...\n");
+  // assert(4==recvfrom(sockfd,buf,ACKSZ,MSG_WAITALL,(struct sockaddr*)(&sin),&addrlen));
   // assert(addrlen==SISZ);
-  // assert(0==memcmp(&backup,&serveraddr,SISZ));
-  // printf("received acknowledgement \"%s\"\n", buf);
 
-  // Close socket
+  // const uint32_t port=ntohl(sin.sin_port);
+  // const char *const s=inet_ntoa(sin.sin_addr);
+  // assert(
+  //   0==strncmp(buf,ACK,ACKSZ) &&
+  //   sin.sin_family==AF_INET &&
+  //   port==DEFAULT_PORT &&
+  //   s && s[0]
+  // );
+  // printf("received acknowledgement from %s:%u\n",s,port);
+
+}*/
+
+// Return false if the line is empty/blank
+// Return true if the line is copied and ready for sending
+static bool read0(bool *lastone, char *const buf, const size_t buflen){
+
+  // https://stackoverflow.com/a/1516177
+  // (TNE)  isatty(fileno(stdin) xxx\n[EOF]
+  // (PNE) !isatty(fileno(stdin) xxx\n[EOF]
+  // (TFSE)   isatty(fileno(stdin) xxx[FLUSH][EOF] // One ^D flushes stdin - Two consecutive ^D's gives EOF
+  // (PE)  !isatty(fileno(stdin) xxx[EOF]
+
+  bzero(buf,buflen);
+  char c='\0';
+  #define GETCHAR() { c=getchar(); assert( (EOF==c||c>=1) && !ferror(stdin) ); }
+
+  //     ' '  ' '  'a'  'b'  '\n'
+  //  |
+  //  c
+
+  // (TNE) or (PNE)
+  GETCHAR();
+  if(feof(stdin)||c==EOF){
+    assert(feof(stdin)&&c==EOF);
+    *lastone=true;
+    return false;
+  }
+
+  // Skip leading spaces and tabs
+  while(isblank(c)){
+    GETCHAR();
+    if(feof(stdin)||c==EOF){ // (TFSE) or (PE)
+      assert( feof(stdin) && c==EOF );
+      isatty(fileno(stdin))?printf("\n"):0; // (TFSE)
+      *lastone=true;
+      return false;
+    }
+  }
+
+  //     ' '  ' '  'a'  'b'  '\n'
+  //                |
+  //                c
+
+  bool ret=false;
+  size_t i=0;
+
+  for(;;){
+    assert(i<=buflen-1);
+    if(feof(stdin)||c==EOF){ // (TFSE) or (PE)
+      assert( feof(stdin) && c==EOF );
+      isatty(fileno(stdin))?printf("\n"):0; // (TFSE)
+      *lastone=true;
+      return ret;
+    }
+    if(c=='\n'){
+      buf[i]='\0';
+      return ret;
+    }
+    buf[i]=c;
+    ret=true;
+    GETCHAR();
+    ++i;
+  }
+
+  //     ' '  ' '  'a'  'b'  '\n'
+  //                          |
+  //                          c
+
+  // Must not reach here
+  assert(false);
+  return false;
+
+}
+
+static void ntexec(const char *const srv, const char *const argv_pattern){
+  assert(argv_pattern[0]!='\0');
+  const int sockfd=init0();
+  if(argv_pattern[0]=='-'){
+    assert(argv_pattern[1]=='\0');
+    char buf[SZ]={};
+    bool lastone=false;
+    for(;;){
+      if(lastone)
+        break;
+      if(!read0(&lastone,buf,SZ))
+        continue;
+      send0(srv,sockfd,buf);
+      // recv0(sockfd);
+    }
+  }else{
+    send0(srv,sockfd,argv_pattern);
+  }
   close(sockfd);
-
 }
 
 int main(const int argc, const char *const *const argv){
 
-  const char *url=NULL;
-
-  bool serveraddr_is_new=false;             //         true               false
-  char serveraddr_arr[INET_ADDRSTRLEN]={};  //          {}            from conf_path
-  const char *serveraddr_p=NULL;            //  (argv[1]/argv[2])+2   serveraddr_arr
-
   // Locate conf
-  conf_genpath();
+  char conf_path[PATH_MAX]={};
+  conf_genpath(conf_path);
 
   // Parse args (read conf)
   switch(argc-1){
-  case 1:
-    serveraddr_is_new=false;
-    URL_NO_HYPHEN(argv[1]);
-    conf_load(serveraddr_arr,INET_ADDRSTRLEN);
-    serveraddr_p=serveraddr_arr;
+  case 1:{
+    char srvip_arr[INET_ADDRSTRLEN]={};
+    conf_load(srvip_arr,INET_ADDRSTRLEN,conf_path);
+    ntexec(srvip_arr,argv[1]);
     break;
+  }break;
   case 2:
-    serveraddr_is_new=true;
     if(0==strncmp(argv[1],"--",2)){
-      serveraddr_p=argv[1]+2;
-      URL_NO_HYPHEN(argv[2]);
-      exit_if_ip_invalid(serveraddr_p,"%.0sip address arg is invalid or contains extra whitespace\n");
+      // With the trailing NULL, there is no need to hide string arg with "%.0s" hack 
+      exit_if_ip_invalid(argv[1]+2,"ip address arg is invalid or contains extra whitespace\n",NULL);
+      conf_update(conf_path,argv[1+2]);
+      ntexec(argv[1]+2,argv[2]);
     }else if(0==strncmp(argv[2],"--",2)){
-      serveraddr_p=argv[2]+2;
-      URL_NO_HYPHEN(argv[1]);
-      exit_if_ip_invalid(serveraddr_p,"%.0sip address arg is invalid or contains extra whitespace\n");
+      exit_if_ip_invalid(argv[2]+2,"ip address arg is invalid or contains extra whitespace\n",NULL);
+      conf_update(conf_path,argv[2+2]);
+      ntexec(argv[2]+2,argv[1]);
     }else{
       help_exit(argv[0]);
     }
@@ -185,12 +287,6 @@ int main(const int argc, const char *const *const argv){
   default:
     help_exit(argv[0]);
   }
-
-  // Ntexec
-  ntexec(serveraddr_p,url);
-
-  // Write conf
-  serveraddr_is_new?conf_update(serveraddr_p):0;
 
   return 0;
 

@@ -238,7 +238,7 @@ void receive_data(){
   assert(buf[bytes_received-1]!='\0');
   buf[bytes_received]='\0';
 
-  // Send acknowledgement
+  // Send acknowledgement even if ntexec0() doesn't require it
   // const char *ack="ack";
   // assert(SOCKET_ERROR!=sendto(sockfd,ack,strlen(ack),0,(SOCKADDR*)(&client),sizeof(struct sockaddr_in)));
 
