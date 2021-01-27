@@ -12,13 +12,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
+#include <arpa/inet.h> // inet_aton()
 
 #include "./def.h"
+#include "./sock.h"
 
-#define SISZ (sizeof(struct sockaddr_in))
 #define URL_NO_HYPHEN(SRC) { url=SRC; assert( url && url[0]!='-' && ( url[0]=='\0' || url[1]!='-' ) ); }
 
 //            250~255   200~249     100~199     10~99     0~9
@@ -36,7 +34,7 @@ static void help_exit(const char *const cmd){
   printf("[P] ""Open url remotely on the previous server ip\n");
   printf("  %s <url>\n",cmd);
   printf("\n");
-  printf("    ""Pass <url> as a single hyphen (-) to read urls from stdin\n");
+  printf("Pass a single hyphen (-) as <url> to read urls from stdin\n");
   printf("\n");
   exit(0);
 }
@@ -105,73 +103,15 @@ static void conf_update(const char *const conf_path, const char *const src){
   assert(0==fclose(f));
 }
 
-static int init0(){
-  int ret=-1;
-  // Create socket
-  assert(3<=(ret=socket(AF_INET,SOCK_DGRAM,0)));
-  return ret;
-}
-
-static void send0(const char *const server, const int sockfd, const char *const url){
-  // Test with loopback
-  // const struct sockaddr_in serveraddr={
-  //   .sin_family=AF_INET,
-  //   .sin_port=htons(DEFAULT_PORT),
-  //   .sin_addr={
-  //     .s_addr=htonl(INADDR_LOOPBACK)
-  //   }
-  // };
-  // Load address
-  struct sockaddr_in sin={
-    .sin_family=AF_INET,
-    .sin_port=htons(DEFAULT_PORT),
-  };
-  assert(1==inet_aton(server,&(sin.sin_addr)));
-  // Send
-  const size_t l=strnlen(url,SZ);
-  assert(l<=SZ-1);
-  printf("sending \"%s\" to %s ...",url,server);
-  fflush(stdout);
-  const ssize_t n=sendto(sockfd,url,l,MSG_CONFIRM,(const struct sockaddr*)(&sin),SISZ);
-  assert((long long)n==(long long)l);
-  printf(" sent\n");
-}
-
-/*static void recv0(const int sockfd){
-
-  assert(false);
-
-  // getpeername()
-
-  // char buf[ACKSZ]={};
-  // struct sockaddr_in sin={};
-
-  // socklen_t addrlen=SISZ;
-  // printf("waiting for acknowledgement ...\n");
-  // assert(4==recvfrom(sockfd,buf,ACKSZ,MSG_WAITALL,(struct sockaddr*)(&sin),&addrlen));
-  // assert(addrlen==SISZ);
-
-  // const uint32_t port=ntohl(sin.sin_port);
-  // const char *const s=inet_ntoa(sin.sin_addr);
-  // assert(
-  //   0==strncmp(buf,ACK,ACKSZ) &&
-  //   sin.sin_family==AF_INET &&
-  //   port==DEFAULT_PORT &&
-  //   s && s[0]
-  // );
-  // printf("received acknowledgement from %s:%u\n",s,port);
-
-}*/
-
 // Return false if the line is empty/blank
 // Return true if the line is copied and ready for sending
-static bool read0(bool *lastone, char *const buf, const size_t buflen){
+static bool getline2(bool *const lastone, char *const buf, const size_t buflen){
 
   // https://stackoverflow.com/a/1516177
-  // (TNE)  isatty(fileno(stdin) xxx\n[EOF]
-  // (PNE) !isatty(fileno(stdin) xxx\n[EOF]
-  // (TFSE)   isatty(fileno(stdin) xxx[FLUSH][EOF] // One ^D flushes stdin - Two consecutive ^D's gives EOF
-  // (PE)  !isatty(fileno(stdin) xxx[EOF]
+  // (TNE)   isatty(fileno(stdin) xxx\n[EOF]
+  // (PNE)  !isatty(fileno(stdin) xxx\n[EOF]
+  // (TFSE)  isatty(fileno(stdin) xxx[FLUSH][EOF] // One ^D flushes stdin - Two consecutive ^D's gives EOF
+  // (PE)   !isatty(fileno(stdin) xxx[EOF]
 
   bzero(buf,buflen);
   char c='\0';
@@ -236,24 +176,29 @@ static bool read0(bool *lastone, char *const buf, const size_t buflen){
 }
 
 static void ntexec(const char *const srv, const char *const argv_pattern){
+
   assert(argv_pattern[0]!='\0');
-  const int sockfd=init0();
+
+  init0(srv);
+
   if(argv_pattern[0]=='-'){
     assert(argv_pattern[1]=='\0');
-    char buf[SZ]={};
     bool lastone=false;
     for(;;){
       if(lastone)
         break;
-      if(!read0(&lastone,buf,SZ))
+      char buf[SZ]={};
+      if(!getline2(&lastone,buf,SZ))
         continue;
-      send0(srv,sockfd,buf);
-      // recv0(sockfd);
+      send0(buf);
+      recv0();
     }
   }else{
-    send0(srv,sockfd,argv_pattern);
+    send0(argv_pattern);
   }
-  close(sockfd);
+
+  end0();
+
 }
 
 int main(const int argc, const char *const *const argv){

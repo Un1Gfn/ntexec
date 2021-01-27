@@ -34,7 +34,9 @@ install: $(CLIENT)
 	@sudo cp -v $(CLIENT) $(DESTDIR)/bin/$(CLIENT)
 
 $(CLIENT): CFLAGS+=-DCONF=\"$(CONF)\"
-%.out: %.c def.h
+$(CLIENT): ntexec.c sock.c def.h
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(filter %.c , $^ ) $(LDLIBS)
+%.out: %.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(filter %.c , $^ ) $(LDLIBS)
 
 test: $(CLIENT)
@@ -43,7 +45,7 @@ test: $(CLIENT)
 release: $(CLIENT) $(SERVER)
 	./release.sh $(CLIENT) $(SERVER)
 
-clean: 
+clean:
 	@rm -fv *.exe *.out  # *.h.gch
 	@sudo rm -rfv $(DESTDIR)/bin/$(CLIENT)
 	ssh $(SSH_DEPLOY_TO) del C:\\Users\\%USER%\\win_server.exe &

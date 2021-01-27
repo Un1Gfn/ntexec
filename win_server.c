@@ -135,11 +135,13 @@ void get_local_ip(){
     }
 
     printf("dhcpfrom ");
-    for(const IP_ADDR_STRING *pp=&(p->DhcpServer);pp!=NULL;pp=pp->Next)printf("{ %s %s %lu } ",
-      pp->IpAddress.String,
-      pp->IpMask.String,
-      pp->Context
-    );
+    for(const IP_ADDR_STRING *pp=&(p->DhcpServer);pp!=NULL;pp=pp->Next){
+      assert(0==strcmp("255.255.255.255",pp->IpMask.String));
+      printf("{ %s %lu } ",
+        pp->IpAddress.String,
+        pp->Context
+      );
+    }
 
     assert(
                   !(p->     HaveWins                 )
@@ -238,9 +240,10 @@ void receive_data(){
   assert(buf[bytes_received-1]!='\0');
   buf[bytes_received]='\0';
 
-  // Send acknowledgement even if ntexec0() doesn't require it
-  // const char *ack="ack";
-  // assert(SOCKET_ERROR!=sendto(sockfd,ack,strlen(ack),0,(SOCKADDR*)(&client),sizeof(struct sockaddr_in)));
+  // Send acknowledgement even if ntexec.out doesn't require it
+  // Wait untill client side is ready to receive
+  Sleep(100UL); // 100ms 0.1s
+  assert(SOCKET_ERROR!=sendto(sockfd,ACK,ACKSZ,0,(SOCKADDR*)(&client),sizeof(struct sockaddr_in)));
 
 }
 
@@ -255,12 +258,16 @@ void loop(){
 void cleanup(){
   printf("quit ...\n");
   assert(0==closesocket(sockfd));
-  Sleep(500UL); // Milliseconds
+  Sleep(500UL); // 500ms 0.5s
   // printf("Press Enter to exit\n");
   // getchar();
 }
 
 int main(){
+
+  printf("\n");
+  printf( "Build " __TIME__ " " __DATE__ "\n" );
+  printf("\n");
 
   initialize_winsock();
 
