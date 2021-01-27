@@ -258,9 +258,9 @@ void loop(){
 void cleanup(){
   printf("quit ...\n");
   assert(0==closesocket(sockfd));
-  Sleep(500UL); // 500ms 0.5s
-  // printf("Press Enter to exit\n");
-  // getchar();
+  assert(0==WSACleanup());
+  // Wait for 500ms before making the window disappear
+  Sleep(500UL);
 }
 
 int main(){

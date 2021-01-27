@@ -9,17 +9,6 @@ function confirm {
   echo
 }
 
-# https://wiki.archlinux.org/index.php/Proxy_server
-function set_proxy {
-  for envar in \
-    http_proxy https_proxy all_proxy \
-    HTTP_PROXY HTTPS_PROXY ALL_PROXY \
-  ; do
-    # echo "$envar"
-    export $envar="http://127.0.0.1:8080/"
-  done
-}
-
 function delete_all_releases {
   # gh release list | cut --delimiter=$'\t' --fields=1;echo
   # gh release list | cut --delimiter=$'\t' --fields=2;echo
@@ -57,7 +46,7 @@ function delete_all_local_and_remote_tags {
   echo "3. Delete all remote tags"
   tags="$(git tag --list)"
   if [ -n "$tags" ]; then
-    printf " :refs/tags/%s " "$tags" | xargs proxychains -q /usr/bin/git push --verbose origin
+    printf " :refs/tags/%s " $tags | xargs proxychains -q /usr/bin/git push --verbose origin
   fi
   echo
 
@@ -84,7 +73,7 @@ function tag_and_release {
 
 echo
 confirm
-set_proxy
+source ~/proxy.bashrc
 delete_all_releases
 delete_all_local_and_remote_tags
 tag_and_release "$@"
