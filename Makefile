@@ -32,7 +32,7 @@ CFLAGS:=-std=gnu17 -g -O0 -Wall -Wextra $(W) $(CFLAGS)
 default: install
 
 clean:
-	@rm -fv *.exe *.out  # *.h.gch
+	@rm -fv *.exe *.out *.gch
 	@sudo rm -rfv $(DESTDIR)/bin/$(CLIENT)
 	ssh $(SSH_DEPLOY_TO) del C:\\Users\\%USER%\\win_server.exe &
 	ssh $(SSH_DEPLOY_TO) del C:\\Users\\%USER%\\win_test.exe &
@@ -48,7 +48,9 @@ $(SERVER): def.h
 %.exe: %.c
 	$(MM) $(M_FLAGS) $(LDFLAGS) -o $@ $(filter %.c , $^ ) $(LDLIBS)
 
-install: $(CLIENT) $(SERVER)
+install:
+	@sudo /bin/true
+	@$(MAKE) $(CLIENT) $(SERVER)
 	sudo cp -v $(CLIENT) $(DESTDIR)/bin/$(CLIENT)
 	scp $(SERVER) $(SSH_DEPLOY_TO):C:\\Users\\%USER%\\$(SERVER) &
 

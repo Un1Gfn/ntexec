@@ -1,0 +1,9 @@
+#!/bin/bash
+# https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks
+# ln -sv ../../pre-push .git/hooks/pre-push
+
+echo
+echo 'You might consider a "make release"'
+echo
+
+exit 0

@@ -31,17 +31,17 @@
 #define MALLOC(x) HeapAlloc(GetProcessHeap(),0,(x))
 #define FREE(x) HeapFree(GetProcessHeap(),0,(x))
 
-SOCKET sockfd=INVALID_SOCKET;
-IP_ADDRESS_STRING local_ip={};
+static SOCKET sockfd=INVALID_SOCKET;
+static IP_ADDRESS_STRING local_ip={};
 
-char buf[SZ+1]={};
+static char buf[SZ+1]={};
 
-void openlnk(){
+static void openlnk(){
   // ShellExecuteA()
   ShellExecute(NULL,"open",buf,NULL,NULL,SW_SHOWNORMAL);
 }
 
-void initialize_winsock(){
+static void initialize_winsock(){
   // Initialize Winsock
   WSADATA wsaData={};
   ZeroMemory(&wsaData,sizeof(WSADATA));
@@ -56,7 +56,7 @@ void initialize_winsock(){
   );
 }
 
-bool all_zero(const IP_ADDRESS_STRING *const pip){
+static bool all_zero(const IP_ADDRESS_STRING *const pip){
   static_assert(16==sizeof(((PIP_ADDRESS_STRING)NULL)->String));
   static_assert(16==sizeof(pip->String));
   return(
@@ -65,7 +65,7 @@ bool all_zero(const IP_ADDRESS_STRING *const pip){
   );
 }
 
-void get_local_ip(){
+static void get_local_ip(){
 
   ULONG required=0;
   assert(ERROR_BUFFER_OVERFLOW==GetAdaptersInfo(NULL,&required));
@@ -194,13 +194,13 @@ void get_local_ip(){
 
 }
 
-void create_socket(){
+static void create_socket(){
   sockfd=socket(AF_INET,SOCK_DGRAM,IPPROTO_UDP);
   assert(sockfd!=INVALID_SOCKET);
   // WSAGetLastError()
 }
 
-void bind_socket(){
+static void bind_socket(){
   struct sockaddr_in server={};
   ZeroMemory(&server,sizeof(struct sockaddr_in));
   server=(struct sockaddr_in){
@@ -222,7 +222,7 @@ void bind_socket(){
   #undef STR
 }
 
-void receive_data(){
+static void receive(const bool acknowledge){
 
   ZeroMemory(buf,SZ+1);
 
@@ -240,27 +240,37 @@ void receive_data(){
   assert(buf[bytes_received-1]!='\0');
   buf[bytes_received]='\0';
 
-  // Send acknowledgement even if ntexec.out doesn't require it
-  // Wait untill client side is ready to receive
-  Sleep(100UL); // 100ms 0.1s
-  assert(SOCKET_ERROR!=sendto(sockfd,ACK,ACKSZ,0,(SOCKADDR*)(&client),sizeof(struct sockaddr_in)));
+  const char *const ip=inet_ntoa(client.sin_addr);
+  assert( ip && ip[0] );
+  printf("received %s from %s:%u",buf,ip,ntohs(client.sin_port));
+
+  if(acknowledge){
+    // Enough to throttle both ther server and the client
+    printf(" throttle...");
+    fflush(stdout);
+    Sleep(THROTTLE);
+    assert(SOCKET_ERROR!=sendto(sockfd,ACK,ACKSZ,0,(SOCKADDR*)(&client),sizeof(struct sockaddr_in)));
+    printf(" ack");
+  }
+
+  printf("\n");
 
 }
 
-void loop(){
-  do{
-    receive_data();
-    printf("%s\n",buf);
+static void loop(){
+  for(;;){
+    receive(TRUE); // (1/2) Send acknowledgement even if ntexec.out doesn't require it
+    if(0==strcmp(CMD_QUIT,buf))
+      break;
     openlnk();
-  }while(0!=strcmp(CMD_QUIT,buf));
+  }
 }
 
-void cleanup(){
+static void cleanup(){
   printf("quit ...\n");
   assert(0==closesocket(sockfd));
   assert(0==WSACleanup());
-  // Wait for 500ms before making the window disappear
-  Sleep(500UL);
+  Sleep(500UL); // Wait for 500ms before making the window disappear
 }
 
 int main(){
@@ -276,7 +286,7 @@ int main(){
   create_socket();
   bind_socket();
 
-  // receive_data();
+  // receive(FALSE); // (2/2) Test purpose
   loop();
 
   cleanup();
