@@ -50,12 +50,13 @@ $(SERVER): def.h
 
 install:
 	@sudo /bin/true
-	@$(MAKE) $(CLIENT) $(SERVER)
+	@$(MAKE) -B $(CLIENT) $(SERVER)
 	sudo cp -v $(CLIENT) $(DESTDIR)/bin/$(CLIENT)
 	scp $(SERVER) $(SSH_DEPLOY_TO):C:\\Users\\%USER%\\$(SERVER) &
 
-release: LDFLAGS:=-static $(LDFLAGS)
-release: $(CLIENT) $(SERVER)
+release: 
+release:
+	@env LDFLAGS=-static $(MAKE) -B $(CLIENT) $(SERVER)
 	./release.sh $(CLIENT) $(SERVER)
 
 # cscope:

@@ -46,6 +46,7 @@ function delete_all_local_and_remote_tags {
   echo "3. Delete all remote tags"
   tags="$(git tag --list)"
   if [ -n "$tags" ]; then
+    # shellcheck disable=SC2086
     printf " :refs/tags/%s " $tags | xargs proxychains -q /usr/bin/git push --verbose origin
   fi
   echo

@@ -10,8 +10,8 @@ void f1(FixedString* s){
 
 int main(int argc, char **argv){
 
-  printf("%lu\n",sizeof(((FixedString*)NULL)->s));
-  printf("%lu\n",sizeof(FixedString));
+  printf("%zu\n",sizeof(((FixedString*)NULL)->s));
+  printf("%zu\n",sizeof(FixedString));
 
   FixedString s={};
   f1(&s);
