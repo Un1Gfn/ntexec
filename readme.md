@@ -1,5 +1,7 @@
 ## Workaround for [SU Q 1572456](https://superuser.com/q/1572456/) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/e5f5064e6dab41d98dc731adf8a09274)](https://www.codacy.com/gh/Un1Gfn-nt/ntexec/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Un1Gfn-nt/ntexec&amp;utm_campaign=Badge_Grade)
 
+**Readline?**
+
 Download statically linked binaries (Assets) from [the release page](https://github.com/Un1Gfn-nt/ntexec/releases)
 
 On Windows
