@@ -290,6 +290,6 @@ int main(){
   loop();
 
   cleanup();
-  return 0;
+  return EXIT_SUCCESS;
 
 }

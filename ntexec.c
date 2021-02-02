@@ -233,6 +233,6 @@ int main(const int argc, const char *const *const argv){
     help_exit(argv[0]);
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 
 }
