@@ -1,3 +1,8 @@
+# https://www.gnu.org/software/make/manual/html_node/Conditional-Syntax.html
+ifneq ($(shell readlink --quiet .git/hooks/pre-push), ../../pre-push)
+$(error Please run "ln -sfv ../../pre-push .git/hooks/pre-push")
+endif
+
 MAKEFLAGS+=--no-builtin-rules
 MAKEFLAGS+=--no-builtin-variables
 

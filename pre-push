@@ -3,7 +3,7 @@
 # ln -sv ../../pre-push .git/hooks/pre-push
 
 echo
-echo 'You might consider a "make release"'
+echo -e '\033[32mYou might want to "make release"\033[0m'
 echo
 
 exit 0
