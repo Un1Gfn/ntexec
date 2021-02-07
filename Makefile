@@ -42,6 +42,9 @@ clean:
 	ssh $(SSH_DEPLOY_TO) del C:\\Users\\%USER%\\win_server.exe &
 	ssh $(SSH_DEPLOY_TO) del C:\\Users\\%USER%\\win_test.exe &
 
+%.i: %.c
+	$(CC) -E $(CFLAGS) -o $@ $(filter %.c , $^ )
+
 $(CLIENT): CFLAGS+=-DCONF=\"$(CONF)\"
 $(CLIENT): sock.c def.h
 %.out: %.c
